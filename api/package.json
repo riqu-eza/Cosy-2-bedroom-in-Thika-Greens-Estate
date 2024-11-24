@@ -1,0 +1,15 @@
+{
+    "name": "api",
+    "lockfileVersion": 3,
+    "requires": true,
+    "main": "index.js",
+    "type": "module",
+    "packages": {},
+    "scripts": {
+        "dev": "nodemon index.js",
+        "build": "npm install --production"
+    },
+    "devDependencies": {
+        "dotenv-cli": "^7.4.4"
+    }
+}

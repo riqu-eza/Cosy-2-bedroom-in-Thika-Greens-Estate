@@ -56,3 +56,4 @@ app.use((err, req, res, next) => {
     message,
   });
 });
+// sudo nano /etc/nginx/conf.d/app.com.conf
