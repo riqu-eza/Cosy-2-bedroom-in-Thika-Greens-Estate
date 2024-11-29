@@ -24,7 +24,7 @@ const Home = () => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          "http://localhost:3004/api/listing/getlisting"
+          "/api/listing/getlisting"
         );
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -52,7 +52,7 @@ const Home = () => {
   };
   const checkAvailability = async () => {
     try {
-      const response = await fetch("http://localhost:3004/api/booking/check", {
+      const response = await fetch("/api/booking/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bookingData),

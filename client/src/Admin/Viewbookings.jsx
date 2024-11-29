@@ -7,7 +7,7 @@ const ViewBookings = () => {
   // Function to fetch bookings
   const fetchBookings = async () => {
     try {
-      const response = await fetch('http://localhost:3004/api/booking/getall'); // Replace with your actual API endpoint
+      const response = await fetch('/api/booking/getall'); // Replace with your actual API endpoint
       if (!response.ok) {
         throw new Error('Failed to fetch bookings');
       }

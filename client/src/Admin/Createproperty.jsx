@@ -190,7 +190,7 @@ const Createproperty = () => {
 
     try {
       console.log(formData);
-      const response = await fetch("http://localhost:3004/api/listing/create", {
+      const response = await fetch("/api/listing/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

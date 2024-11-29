@@ -28,7 +28,7 @@ const AdminAddBooking = () => {
 
     // Send to backend
     try {
-      const response = await fetch("http://localhost:3004/api/admin/bookdate", {
+      const response = await fetch("/api/admin/bookdate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dates }),
