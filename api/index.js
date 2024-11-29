@@ -34,6 +34,13 @@ app.use(
   })
 );
 
+app.use(cors({
+  origin: 'https://cosytwobedroominthika.online',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credintials:true,
+}));
+
+
 app.use(cookieParser());
 
 app.listen(3004, () => {
