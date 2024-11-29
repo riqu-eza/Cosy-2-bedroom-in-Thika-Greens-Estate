@@ -40,7 +40,7 @@ const Viewall = (data) => {
     const fetchComments = async () => {
       try {
         const response = await fetch(
-          `http://localhost:3004/api/comment/getrating`
+          `/api/comment/getrating`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch comments");

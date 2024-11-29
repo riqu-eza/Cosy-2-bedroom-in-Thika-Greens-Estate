@@ -59,7 +59,7 @@ const BookingForm = ({ price, initialData }) => {
     console.log("bookingData", bookingData); // Log for debugging
 
     try {
-      const response = await fetch("http://localhost:3004/api/booking/create", {
+      const response = await fetch("/api/booking/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
