@@ -26,19 +26,14 @@ const __dirname = path.resolve();
 const app = express();
 
 app.use(express.json());
-app.use(
-  cors({
-    origin: "http://localhost:5173", // Change this to the domain of your frontend
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true, // If you're using cookies
-  })
-);
+
 
 app.use(cors({
-  origin: 'https://cosytwobedroominthika.online',
+  origin: ['https://cosytwobedroominthika.online', "http://localhost:5173"],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credintials:true,
 }));
+
 
 
 app.use(cookieParser());

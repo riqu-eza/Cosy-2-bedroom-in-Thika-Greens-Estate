@@ -4,12 +4,10 @@ import { useState, useEffect } from "react";
 
 const BookingForm = ({ price, initialData }) => {
   const [showBookingOverlay, setShowBookingOverlay] = useState(false);
-
   const [phoneNumber, setPhoneNumber] = useState(""); // for MPesa
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [checkInDate, setCheckInDate] = useState(initialData?.checkInDate || "");
   const [checkOutDate, setCheckOutDate] = useState(initialData?.checkOutDate || "");
-  
   const [totalNights, setTotalNights] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
   const [guestNumber, setGuestNumber] = useState(initialData?.guestNumber || 1);
@@ -21,7 +19,6 @@ const BookingForm = ({ price, initialData }) => {
     phone: "",
   });
 
-  // Calculate total nights and cost
   useEffect(() => {
     if (checkInDate && checkOutDate) {
       const checkIn = new Date(checkInDate);
@@ -39,36 +36,32 @@ const BookingForm = ({ price, initialData }) => {
   };
 
   const handleSubmit = async () => {
-    // Validate form details
     const { firstName, lastName, email, phone } = formDetails;
     if (!firstName || !lastName || !email || !phone) {
       alert("Please fill in all personal details.");
-      return; // Prevent submission if any required fields are missing
+      return;
     }
 
-    // Form data to send to the API
     const bookingData = {
       checkInDate,
       checkOutDate,
       guestNumber,
       totalNights,
       totalCost,
-      formDetails, // Ensure formDetails is included here
+      formDetails,
     };
 
-    console.log("bookingData", bookingData); // Log for debugging
+    console.log("bookingData", bookingData);
 
     try {
       const response = await fetch("/api/booking/create", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bookingData),
       });
 
       if (!response.ok) {
-        const errorData = await response.json(); // Parse the error response
+        const errorData = await response.json();
         throw new Error(errorData.message || "Error submitting booking");
       }
 
@@ -76,7 +69,6 @@ const BookingForm = ({ price, initialData }) => {
       console.log("Booking successful:", data);
       alert("Booking submitted successfully!");
 
-      // Optionally reset form fields
       setCheckInDate("");
       setCheckOutDate("");
       setGuestNumber(1);
@@ -93,21 +85,18 @@ const BookingForm = ({ price, initialData }) => {
       alert("There was an error submitting the booking: " + error.message);
     }
   };
+
   const handleMPesaPayment = async () => {
     try {
       console.log("Mpesa transaction underway...");
-
-      // Call backend to trigger MPesa payment request
       const paymentResponse = await fetch(
         "http://localhost:3004/api/payments/Mpesapay",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phoneNumber, amount: totalCost }), // Use formData.totalPrice directly
+          body: JSON.stringify({ phoneNumber, amount: totalCost }),
         }
       );
-
-      console.log("body", paymentResponse);
 
       if (!paymentResponse.ok) {
         throw new Error(`HTTP error! status: ${paymentResponse.status}`);
@@ -130,19 +119,20 @@ const BookingForm = ({ price, initialData }) => {
   };
 
   return (
-    <div className="border-black border-2 rounded-md p-4 w-full max-w-5xl justify-center mx-auto ">
-      <h4 className="text-lg font-semibold mb-4">Book Now</h4>
+    <div className="border-black border-2 rounded-md font-[Montserrat]  p-4 w-full max-w-5xl mx-auto">
+      <h4 className="text-lg font-semibold mb-4 text-center">Book Now</h4>
 
       {/* Booking Details */}
-      <div className="flex gap-1 ">
-        <div className="border border-gray-300 p-2 mb-4 max-w-[350px] ">
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Booking Dates Section */}
+        <div className="border border-gray-300 p-4 w-full md:w-1/3">
           <label>
             Check-In Date:
             <input
               type="date"
               value={checkInDate}
               onChange={(e) => setCheckInDate(e.target.value)}
-              className="p-2 border border-gray-300 rounded w-full"
+              className="p-2 border rounded w-full"
               required
             />
           </label>
@@ -152,7 +142,7 @@ const BookingForm = ({ price, initialData }) => {
               type="date"
               value={checkOutDate}
               onChange={(e) => setCheckOutDate(e.target.value)}
-              className="p-2 border border-gray-300 rounded w-full"
+              className="p-2 border rounded w-full"
               required
             />
           </label>
@@ -163,15 +153,15 @@ const BookingForm = ({ price, initialData }) => {
               value={guestNumber}
               onChange={(e) => setGuestNumber(e.target.value)}
               min="1"
-              className="p-2 border border-gray-300 rounded w-full"
+              className="p-2 border rounded w-full"
               required
             />
           </label>
           <p>Total Nights: {totalNights}</p>
         </div>
 
-        {/* Personal Details */}
-        <div className="border border-gray-300 p-2 mb-4 max-w-[350px] ">
+        {/* Personal Details Section */}
+        <div className="border border-gray-300 p-4 w-full md:w-1/3">
           <label>
             First Name:
             <input
@@ -179,7 +169,7 @@ const BookingForm = ({ price, initialData }) => {
               name="firstName"
               value={formDetails.firstName}
               onChange={handleInputChange}
-              className="p-2 border border-gray-300 rounded w-full"
+              className="p-2 border rounded w-full"
               required
             />
           </label>
@@ -190,7 +180,7 @@ const BookingForm = ({ price, initialData }) => {
               name="lastName"
               value={formDetails.lastName}
               onChange={handleInputChange}
-              className="p-2 border border-gray-300 rounded w-full"
+              className="p-2 border rounded w-full"
               required
             />
           </label>
@@ -201,7 +191,7 @@ const BookingForm = ({ price, initialData }) => {
               name="email"
               value={formDetails.email}
               onChange={handleInputChange}
-              className="p-2 border border-gray-300 rounded w-full"
+              className="p-2 border rounded w-full"
               required
             />
           </label>
@@ -212,62 +202,52 @@ const BookingForm = ({ price, initialData }) => {
               name="phone"
               value={formDetails.phone}
               onChange={handleInputChange}
-              className="p-2 border border-gray-300 rounded w-full"
+              className="p-2 border rounded w-full"
               required
             />
           </label>
         </div>
 
-        {/* Confirmation */}
-        <div className="border border-gray-300 p-2 max-w-[350px] ">
+        {/* Payment Section */}
+        <div className="border border-gray-300 p-4 w-full md:w-1/3">
           <p>
             Stay From: {checkInDate || "N/A"} to {checkOutDate || "N/A"}
           </p>
           <p>Total Cost: ${totalCost}</p>
-          <div className="mt-6">
-            <h1 className="text-xl font-bold ">Pay with</h1>
-            <div className="flex flex-col items-center">
-              <div className="w-full md:w-1/2">
-                <button
-                  className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded transition-all"
-                  onClick={() => setShowBookingOverlay(true)}
-                >
-                  Mpesa
-                </button>
-                {showBookingOverlay && (
-                  <div className="payment-section bg-gray-100  rounded-lg shadow-md">
-                    <h2 className="text-lg font-thin mb-3">
-                      Complete Your Payment with MPesa
-                    </h2>
-                    <input
-                      type="tel"
-                      placeholder="Enter MPesa phone number"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      required
-                      className="w-full p-2 border border-gray-300 rounded mb-4"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleMPesaPayment}
-                      className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition-all"
-                    >
-                      Pay via MPesa
-                    </button>
-                    {paymentStatus && (
-                      <p className="mt-4 text-center text-gray-600 font-medium">
-                        {paymentStatus}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
           <button
-            type="button"
-            className="bg-blue-500 text-white py-2 px-4 rounded mt-4"
-            onClick={handleSubmit} // Submit form data
+            className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 rounded mt-4"
+            onClick={() => setShowBookingOverlay(true)}
+          >
+            Pay with MPesa
+          </button>
+
+          {showBookingOverlay && (
+            <div className="mt-4 p-4 bg-gray-100 rounded shadow-md">
+              <h2 className="text-lg mb-2">MPesa Payment</h2>
+              <input
+                type="tel"
+                placeholder="Enter MPesa phone number"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className="w-full p-2 border rounded mb-4"
+              />
+              <button
+                onClick={handleMPesaPayment}
+                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded"
+              >
+                Pay Now
+              </button>
+              {paymentStatus && (
+                <p className="text-center mt-2 text-gray-600">
+                  {paymentStatus}
+                </p>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={handleSubmit}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded mt-4"
           >
             Submit Booking
           </button>

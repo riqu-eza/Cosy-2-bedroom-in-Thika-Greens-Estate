@@ -12,8 +12,10 @@ export const CreateListing = async (req, res, next) => {
   };
   
   export const GetListing = async (req, res, next) => {
+    console.log("we are here")
     try {
       const listing = await Listing.find();
+      console.log("wel", listing)
       res.status(200).json(listing);
     } catch (e) {
       next(e);
