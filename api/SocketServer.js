@@ -2,7 +2,7 @@ import { Server } from "socket.io";
 
 const io = new Server(3005, {
   cors: {
-    origin: ["http://localhost:5173",'https://cosytwobedroominthika.online'] // Replace with your frontend URL
+    origin: ["http://localhost:5173",'http://cosytwobedroominthika.online'] // Replace with your frontend URL
   },
 });
 
