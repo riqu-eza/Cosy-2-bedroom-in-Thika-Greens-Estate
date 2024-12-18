@@ -18,6 +18,7 @@ export const createBooking = async (req, res, next) => {
     checkInDate,
     checkOutDate,
     totalNights,
+    receiptNumber,
     totalCost,
     guestNumber,
     formDetails,
@@ -28,6 +29,7 @@ export const createBooking = async (req, res, next) => {
       checkInDate,
       checkOutDate,
       totalNights,
+      receiptNumber,
       totalCost,
       guestNumber,
       formDetails,
@@ -53,10 +55,11 @@ export const createBooking = async (req, res, next) => {
     pdfDoc.fontSize(14).text(`Check-In Date: ${checkInDate}`);
     pdfDoc.text(`Check-Out Date: ${checkOutDate}`);
     pdfDoc.text(`Total Nights: ${totalNights}`);
-    pdfDoc.text(`Total Cost: $${totalCost}`);
+    pdfDoc.text(`Total Cost: Ksh${totalCost}`);
     pdfDoc.text(`Number of Guests: ${guestNumber}`);
     pdfDoc.text(`Guest Name: ${formDetails.firstName} ${formDetails.lastName}`);
     pdfDoc.text(`Contact Email: ${formDetails.email}`);
+    pdfDoc.text(`Your payment confirmed: ${receiptNumber}`);
     pdfDoc.moveDown().text("Thank you for your booking!", { align: "center" });
 
     // Finalize the PDF
@@ -94,7 +97,7 @@ export const createBooking = async (req, res, next) => {
           </tr>
           <tr>
               <td style="border: 1px solid #ddd; padding: 8px;"><strong>Total Cost:</strong></td>
-              <td style="border: 1px solid #ddd; padding: 8px;">$${totalCost}</td>
+              <td style="border: 1px solid #ddd; padding: 8px;">Ksh${totalCost}</td>
           </tr>
           <tr>
               <td style="border: 1px solid #ddd; padding: 8px;"><strong>Guests:</strong></td>
@@ -103,6 +106,10 @@ export const createBooking = async (req, res, next) => {
           <tr>
               <td style="border: 1px solid #ddd; padding: 8px;"><strong>Contact Email:</strong></td>
               <td style="border: 1px solid #ddd; padding: 8px;">${formDetails.email}</td>
+          </tr>
+          <tr>
+              <td style="border: 1px solid #ddd; padding: 8px;"><strong>Payment confirmtion code:</strong></td>
+              <td style="border: 1px solid #ddd; padding: 8px;">${receiptNumber}</td>
           </tr>
       </table>
       <p>We look forward to hosting you!</p>

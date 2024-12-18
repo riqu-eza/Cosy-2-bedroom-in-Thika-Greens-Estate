@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 // BookingForm.js
 import { useState, useEffect } from "react";
+import { io } from "socket.io-client";
 
 const BookingForm = ({ price, initialData }) => {
   const [showBookingOverlay, setShowBookingOverlay] = useState(false);
@@ -11,6 +12,8 @@ const BookingForm = ({ price, initialData }) => {
   const [totalNights, setTotalNights] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
   const [guestNumber, setGuestNumber] = useState(initialData?.guestNumber || 1);
+  const [receiptNumber, setReceiptNumber] = useState(null);
+  const [isBookingEnabled, setIsBookingEnabled] = useState(false);
 
   const [formDetails, setFormDetails] = useState({
     firstName: "",
@@ -19,6 +22,7 @@ const BookingForm = ({ price, initialData }) => {
     phone: "",
   });
 
+  // Calculate total nights and cost
   useEffect(() => {
     if (checkInDate && checkOutDate) {
       const checkIn = new Date(checkInDate);
@@ -29,6 +33,31 @@ const BookingForm = ({ price, initialData }) => {
       setTotalCost(nights * price);
     }
   }, [checkInDate, checkOutDate, price]);
+
+  // WebSocket setup for payment confirmation
+  useEffect(() => {
+    const socket = io("http://localhost:3005");
+    console.log("Connecting to WebSocket server...",socket.id);
+  
+    socket.on("paymentStatus", (data) => {
+      console.log("Received payment status:", data);
+      if (data.status === "success") {
+        setPaymentStatus("Payment Successful! Proceed to confirm.");
+        setReceiptNumber(data.MpesaReceiptNumber);
+        setIsBookingEnabled(true);
+      } else {
+        setPaymentStatus("Payment Failed. Please try again.");
+        setReceiptNumber(null);
+        setIsBookingEnabled(false);
+      }
+    });
+  
+    return () => {
+      socket.disconnect();
+      console.log("Disconnected from WebSocket server.");
+    };
+  }, []); // Empty dependency array ensures the WebSocket initializes only once
+  
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -48,10 +77,9 @@ const BookingForm = ({ price, initialData }) => {
       guestNumber,
       totalNights,
       totalCost,
+      receiptNumber, // Add receipt number from WebSocket
       formDetails,
     };
-
-    console.log("bookingData", bookingData);
 
     try {
       const response = await fetch("/api/booking/create", {
@@ -61,196 +89,99 @@ const BookingForm = ({ price, initialData }) => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Error submitting booking");
+        throw new Error("Error submitting booking");
       }
 
       const data = await response.json();
       console.log("Booking successful:", data);
       alert("Booking submitted successfully!");
 
+      // Reset form
       setCheckInDate("");
       setCheckOutDate("");
       setGuestNumber(1);
       setTotalNights(0);
       setTotalCost(0);
-      setFormDetails({
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-      });
+      setPhoneNumber("");
+      setPaymentStatus(null);
+      setFormDetails({ firstName: "", lastName: "", email: "", phone: "" });
+      setReceiptNumber(null);
+      setIsBookingEnabled(false);
     } catch (error) {
       console.error("Error submitting booking:", error);
-      alert("There was an error submitting the booking: " + error.message);
+      alert("Error: " + error.message);
     }
   };
 
   const handleMPesaPayment = async () => {
+    if (!phoneNumber) {
+      setPaymentStatus("Please enter a valid phone number.");
+      return;
+    }
     try {
-      console.log("Mpesa transaction underway...");
-      const paymentResponse = await fetch(
-        "http://localhost:3004/api/payments/Mpesapay",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phoneNumber, amount: totalCost }),
-        }
-      );
-
-      if (!paymentResponse.ok) {
-        throw new Error(`HTTP error! status: ${paymentResponse.status}`);
-      }
-
+      setPaymentStatus("Initiating payment... Please wait.");
+      const paymentResponse = await fetch("/api/payments/Mpesapay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber, amount: totalCost }),
+      });
+  
+      if (!paymentResponse.ok) throw new Error("Payment initiation failed.");
+  
       const paymentData = await paymentResponse.json();
-      console.log("Payment response", paymentData);
-
-      if (paymentData.status === "pending") {
-        setPaymentStatus("Pending confirmation from MPesa.");
+      if (paymentData.CheckoutRequestID) {
+        setPaymentStatus("STK Push sent. Check your phone to complete the transaction.");
       } else {
-        setPaymentStatus("Payment failed.");
+        setPaymentStatus("Payment initiation failed. Try again.");
       }
     } catch (error) {
-      console.error("Error during MPesa payment:", error);
-      setPaymentStatus(
-        "An error occurred during the payment process. Please try again."
-      );
+      console.error("MPesa payment error:", error);
+      setPaymentStatus("An error occurred. Check your connection.");
     }
   };
+  
 
   return (
-    <div className="border-black border-2 rounded-md font-[Montserrat]  p-4 w-full max-w-5xl mx-auto">
+    <div className="border-black border-2 rounded-md font-[Montserrat] p-4 w-full max-w-5xl mx-auto">
       <h4 className="text-lg font-semibold mb-4 text-center">Book Now</h4>
-
-      {/* Booking Details */}
       <div className="flex flex-col md:flex-row gap-4">
-        {/* Booking Dates Section */}
-        <div className="border border-gray-300 p-4 w-full md:w-1/3">
+        {/* Booking Dates */}
+        <div className="border p-4 w-full md:w-1/3">
           <label>
             Check-In Date:
-            <input
-              type="date"
-              value={checkInDate}
-              onChange={(e) => setCheckInDate(e.target.value)}
-              className="p-2 border rounded w-full"
-              required
-            />
+            <input type="date" value={checkInDate} onChange={(e) => setCheckInDate(e.target.value)} className="p-2 border rounded w-full" />
           </label>
           <label>
             Check-Out Date:
-            <input
-              type="date"
-              value={checkOutDate}
-              onChange={(e) => setCheckOutDate(e.target.value)}
-              className="p-2 border rounded w-full"
-              required
-            />
+            <input type="date" value={checkOutDate} onChange={(e) => setCheckOutDate(e.target.value)} className="p-2 border rounded w-full" />
           </label>
           <label>
             Number of Guests:
-            <input
-              type="number"
-              value={guestNumber}
-              onChange={(e) => setGuestNumber(e.target.value)}
-              min="1"
-              className="p-2 border rounded w-full"
-              required
-            />
+            <input type="number" value={guestNumber} onChange={(e) => setGuestNumber(e.target.value)} className="p-2 border rounded w-full" />
           </label>
           <p>Total Nights: {totalNights}</p>
         </div>
 
-        {/* Personal Details Section */}
-        <div className="border border-gray-300 p-4 w-full md:w-1/3">
-          <label>
-            First Name:
-            <input
-              type="text"
-              name="firstName"
-              value={formDetails.firstName}
-              onChange={handleInputChange}
-              className="p-2 border rounded w-full"
-              required
-            />
-          </label>
-          <label>
-            Last Name:
-            <input
-              type="text"
-              name="lastName"
-              value={formDetails.lastName}
-              onChange={handleInputChange}
-              className="p-2 border rounded w-full"
-              required
-            />
-          </label>
-          <label>
-            Email:
-            <input
-              type="email"
-              name="email"
-              value={formDetails.email}
-              onChange={handleInputChange}
-              className="p-2 border rounded w-full"
-              required
-            />
-          </label>
-          <label>
-            Phone:
-            <input
-              type="tel"
-              name="phone"
-              value={formDetails.phone}
-              onChange={handleInputChange}
-              className="p-2 border rounded w-full"
-              required
-            />
-          </label>
+        {/* Personal Details */}
+        <div className="border p-4 w-full md:w-1/3">
+          <label>First Name: <input type="text" name="firstName" value={formDetails.firstName} onChange={handleInputChange} className="p-2 border rounded w-full" /></label>
+          <label>Last Name: <input type="text" name="lastName" value={formDetails.lastName} onChange={handleInputChange} className="p-2 border rounded w-full" /></label>
+          <label>Email: <input type="email" name="email" value={formDetails.email} onChange={handleInputChange} className="p-2 border rounded w-full" /></label>
+          <label>Phone: <input type="tel" name="phone" value={formDetails.phone} onChange={handleInputChange} className="p-2 border rounded w-full" /></label>
         </div>
 
         {/* Payment Section */}
-        <div className="border border-gray-300 p-4 w-full md:w-1/3">
-          <p>
-            Stay From: {checkInDate || "N/A"} to {checkOutDate || "N/A"}
-          </p>
+        <div className="border p-4 w-full md:w-1/3">
           <p>Total Cost: ${totalCost}</p>
-          <button
-            className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 rounded mt-4"
-            onClick={() => setShowBookingOverlay(true)}
-          >
-            Pay with MPesa
-          </button>
-
+          <button onClick={() => setShowBookingOverlay(true)} className="bg-green-500 text-white p-2 rounded w-full">Pay with MPesa</button>
           {showBookingOverlay && (
-            <div className="mt-4 p-4 bg-gray-100 rounded shadow-md">
-              <h2 className="text-lg mb-2">MPesa Payment</h2>
-              <input
-                type="tel"
-                placeholder="Enter MPesa phone number"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                className="w-full p-2 border rounded mb-4"
-              />
-              <button
-                onClick={handleMPesaPayment}
-                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded"
-              >
-                Pay Now
-              </button>
-              {paymentStatus && (
-                <p className="text-center mt-2 text-gray-600">
-                  {paymentStatus}
-                </p>
-              )}
+            <div className="mt-4">
+              <input type="tel" placeholder="Phone Number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="p-2 border rounded w-full" />
+              <button onClick={handleMPesaPayment} className="bg-blue-500 text-white p-2 rounded w-full mt-2">Pay Now</button>
+              {paymentStatus && <p>{paymentStatus}</p>}
             </div>
           )}
-
-          <button
-            onClick={handleSubmit}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded mt-4"
-          >
-            Submit Booking
-          </button>
+          <button onClick={handleSubmit} disabled={!isBookingEnabled} className={`p-2 rounded w-full mt-4 ${isBookingEnabled ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-500"}`}>Submit Booking</button>
         </div>
       </div>
     </div>
