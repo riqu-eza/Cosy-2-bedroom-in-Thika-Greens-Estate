@@ -7,8 +7,12 @@ const BookingForm = ({ price, initialData }) => {
   const [showBookingOverlay, setShowBookingOverlay] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState(""); // for MPesa
   const [paymentStatus, setPaymentStatus] = useState(null);
-  const [checkInDate, setCheckInDate] = useState(initialData?.checkInDate || "");
-  const [checkOutDate, setCheckOutDate] = useState(initialData?.checkOutDate || "");
+  const [checkInDate, setCheckInDate] = useState(
+    initialData?.checkInDate || ""
+  );
+  const [checkOutDate, setCheckOutDate] = useState(
+    initialData?.checkOutDate || ""
+  );
   const [totalNights, setTotalNights] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
   const [guestNumber, setGuestNumber] = useState(initialData?.guestNumber || 1);
@@ -36,9 +40,12 @@ const BookingForm = ({ price, initialData }) => {
 
   // WebSocket setup for payment confirmation
   useEffect(() => {
-    const socket = io("http://localhost:3005");
-    console.log("Connecting to WebSocket server...",socket.id);
-  
+    const socket = io("http://cosytwobedroominthika.online", {
+      path: "/socket.io", // Match Nginx location path
+      transports: ["websocket", "polling"],
+    });
+    console.log("Connecting to WebSocket server...", socket.id);
+
     socket.on("paymentStatus", (data) => {
       console.log("Received payment status:", data);
       if (data.status === "success") {
@@ -51,13 +58,12 @@ const BookingForm = ({ price, initialData }) => {
         setIsBookingEnabled(false);
       }
     });
-  
+
     return () => {
       socket.disconnect();
       console.log("Disconnected from WebSocket server.");
     };
   }, []); // Empty dependency array ensures the WebSocket initializes only once
-  
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -125,12 +131,14 @@ const BookingForm = ({ price, initialData }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phoneNumber, amount: totalCost }),
       });
-  
+
       if (!paymentResponse.ok) throw new Error("Payment initiation failed.");
-  
+
       const paymentData = await paymentResponse.json();
       if (paymentData.CheckoutRequestID) {
-        setPaymentStatus("STK Push sent. Check your phone to complete the transaction.");
+        setPaymentStatus(
+          "STK Push sent. Check your phone to complete the transaction."
+        );
       } else {
         setPaymentStatus("Payment initiation failed. Try again.");
       }
@@ -139,7 +147,6 @@ const BookingForm = ({ price, initialData }) => {
       setPaymentStatus("An error occurred. Check your connection.");
     }
   };
-  
 
   return (
     <div className="border-black border-2 rounded-md font-[Montserrat] p-4 w-full max-w-5xl mx-auto">
@@ -149,39 +156,112 @@ const BookingForm = ({ price, initialData }) => {
         <div className="border p-4 w-full md:w-1/3">
           <label>
             Check-In Date:
-            <input type="date" value={checkInDate} onChange={(e) => setCheckInDate(e.target.value)} className="p-2 border rounded w-full" />
+            <input
+              type="date"
+              value={checkInDate}
+              onChange={(e) => setCheckInDate(e.target.value)}
+              className="p-2 border rounded w-full"
+            />
           </label>
           <label>
             Check-Out Date:
-            <input type="date" value={checkOutDate} onChange={(e) => setCheckOutDate(e.target.value)} className="p-2 border rounded w-full" />
+            <input
+              type="date"
+              value={checkOutDate}
+              onChange={(e) => setCheckOutDate(e.target.value)}
+              className="p-2 border rounded w-full"
+            />
           </label>
           <label>
             Number of Guests:
-            <input type="number" value={guestNumber} onChange={(e) => setGuestNumber(e.target.value)} className="p-2 border rounded w-full" />
+            <input
+              type="number"
+              value={guestNumber}
+              onChange={(e) => setGuestNumber(e.target.value)}
+              className="p-2 border rounded w-full"
+            />
           </label>
           <p>Total Nights: {totalNights}</p>
         </div>
 
         {/* Personal Details */}
         <div className="border p-4 w-full md:w-1/3">
-          <label>First Name: <input type="text" name="firstName" value={formDetails.firstName} onChange={handleInputChange} className="p-2 border rounded w-full" /></label>
-          <label>Last Name: <input type="text" name="lastName" value={formDetails.lastName} onChange={handleInputChange} className="p-2 border rounded w-full" /></label>
-          <label>Email: <input type="email" name="email" value={formDetails.email} onChange={handleInputChange} className="p-2 border rounded w-full" /></label>
-          <label>Phone: <input type="tel" name="phone" value={formDetails.phone} onChange={handleInputChange} className="p-2 border rounded w-full" /></label>
+          <label>
+            First Name:{" "}
+            <input
+              type="text"
+              name="firstName"
+              value={formDetails.firstName}
+              onChange={handleInputChange}
+              className="p-2 border rounded w-full"
+            />
+          </label>
+          <label>
+            Last Name:{" "}
+            <input
+              type="text"
+              name="lastName"
+              value={formDetails.lastName}
+              onChange={handleInputChange}
+              className="p-2 border rounded w-full"
+            />
+          </label>
+          <label>
+            Email:{" "}
+            <input
+              type="email"
+              name="email"
+              value={formDetails.email}
+              onChange={handleInputChange}
+              className="p-2 border rounded w-full"
+            />
+          </label>
+          <label>
+            Phone:{" "}
+            <input
+              type="tel"
+              name="phone"
+              value={formDetails.phone}
+              onChange={handleInputChange}
+              className="p-2 border rounded w-full"
+            />
+          </label>
         </div>
 
         {/* Payment Section */}
         <div className="border p-4 w-full md:w-1/3">
           <p>Total Cost: ${totalCost}</p>
-          <button onClick={() => setShowBookingOverlay(true)} className="bg-green-500 text-white p-2 rounded w-full">Pay with MPesa</button>
+          <button
+            onClick={() => setShowBookingOverlay(true)}
+            className="bg-green-500 text-white p-2 rounded w-full"
+          >
+            Pay with MPesa
+          </button>
           {showBookingOverlay && (
             <div className="mt-4">
-              <input type="tel" placeholder="Phone Number" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="p-2 border rounded w-full" />
-              <button onClick={handleMPesaPayment} className="bg-blue-500 text-white p-2 rounded w-full mt-2">Pay Now</button>
+              <input
+                type="tel"
+                placeholder="Phone Number"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className="p-2 border rounded w-full"
+              />
+              <button
+                onClick={handleMPesaPayment}
+                className="bg-blue-500 text-white p-2 rounded w-full mt-2"
+              >
+                Pay Now
+              </button>
               {paymentStatus && <p>{paymentStatus}</p>}
             </div>
           )}
-          <button onClick={handleSubmit} disabled={!isBookingEnabled} className={`p-2 rounded w-full mt-4 ${isBookingEnabled ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-500"}`}>Submit Booking</button>
+          <button
+            onClick={handleSubmit}
+            disabled={!isBookingEnabled}
+            className={`p-2 rounded w-full mt-4 ${isBookingEnabled ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-500"}`}
+          >
+            Submit Booking
+          </button>
         </div>
       </div>
     </div>

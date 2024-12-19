@@ -31,7 +31,7 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: ['https://cosytwobedroominthika.online', "http://localhost:5173"],
+  origin: ['http://cosytwobedroominthika.online', "http://localhost:5173"],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
